@@ -91,7 +91,7 @@ const Map = props => {
                             </svg>
                         </div>
                     </Link>
-                    <a href="https://discord.gg/FuePqMTZqg"><img src="/logoanimated.gif" width="24" alt="" className="ml-2"/></a>
+                    <a href="https://discord.gg/eBhAEPgV6K"><img src="/logoanimated.gif" width="24" alt="" className="ml-2"/></a>
 
 
 
