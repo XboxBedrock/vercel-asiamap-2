@@ -73,15 +73,7 @@ const stats = props => {
                         </div>
                         <div className="table-row">
                             <div className="table-cell font-bold">Total area claimed</div>
-                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{stats.totalArea.toLocaleString()}m² = {(stats.totalArea / 1000000).toLocaleString()} km² (ca. {((parseInt(stats.totalArea) / 357386000000)*100).toFixed(10).toLocaleString()}% of Germany's full area)</span>}</div>
-                        </div>
-                        <div className="table-row">
-                            <div className="table-cell font-bold">Number of people whose homes have been built (Very imprecise)</div>
-                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{((stats.totalArea/1000000) * 233).toFixed(0).toLocaleString()}</span>}</div>
-                        </div>
-                        <div className="table-row">
-                            <div className="table-cell font-bold">Total area claimed (percent of the total build-up area in Germany)</div>
-                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{((parseInt(stats.totalArea) / 57213000000)*100).toFixed(10).toLocaleString()}%</span>}</div>
+                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{stats.totalArea.toLocaleString()}m² = {(stats.totalArea / 1000000).toLocaleString()} km² (ca. {((parseInt(stats.totalArea) / 44579000000000)*100).toFixed(10).toLocaleString()}% of Asia's full area)</span>}</div>
                         </div>
                     </div>
                 </div>
