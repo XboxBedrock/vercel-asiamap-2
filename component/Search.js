@@ -41,7 +41,7 @@ const Search = props => {
             />
         )
     );
-    return (
+    if (router?.query?.overlay !== "false") return (
         <div>
             <InstantSearch searchClient={searchClient} indexName="regions">
                 <Configure hitsPerPage={5} />
@@ -52,6 +52,7 @@ const Search = props => {
 
         </div>
     );
+    else return null;
 }
 
 export default Search

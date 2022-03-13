@@ -1,9 +1,11 @@
 import React from 'react';
 import {signIn, signOut, useSession} from 'next-auth/client'
+import {useRouter} from "next/router";
 
 const AccountButton = props => {
     const [session, loading] = useSession()
-    return (
+    const router = useRouter()
+    if (router?.query?.overlay !== "false") return (
         <div>
             {!session &&
             <button
@@ -22,6 +24,7 @@ const AccountButton = props => {
             }
         </div>
     );
+    else return null;
 }
 
 export default AccountButton
