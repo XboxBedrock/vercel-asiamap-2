@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip, LayersControl} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
@@ -14,19 +14,21 @@ import {AnimatePresence, motion} from "framer-motion"
 import RegionDialog from "./RegionDialog";
 import { useRouter } from 'next/router';
 import wc from 'which-country';
+import $, { map } from 'jquery';
 
 function disable(val) {
     if (document.getElementsByClassName('leaflet-control-layers')[0]) document.getElementsByClassName('leaflet-control-layers')[0].style.visibility = val? "visible": "hidden"
 }
 
 const Map = props => {
+    const mapRef = useRef();
     const [regions, setRegions] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogData, setDialogData] = useState(null);
     const router = useRouter();
     const query = router?.query;
     const renderOverlay = (query.overlay === "false" ? false : true);
-    const countries = query?.countries?.split(","); 
+    const countries = query?.countries?.split(",");
     console.log(countries);
 
     useEffect(() => {
@@ -54,6 +56,11 @@ const Map = props => {
         return (<div className="bg-gray-900 h-screen w-100 flex items-center justify-center"><TailSpin width="100"/></div>);
     return (
         <div>
+            {!renderOverlay && <style jsx global>{`
+                .leaflet-control-layers {
+                    display: none;
+                }
+            `}  </style>}
             <AnimatePresence>
             {
                 dialogOpen && <div>
@@ -112,8 +119,7 @@ const Map = props => {
                 </div>)
                 }
             </a>
-            <MapContainer center={props.zoomPosition ? props.zoomPosition : (countries?.includes("isr")? [31.7541495, 35.2258429 ]:[26.0494961, 72.0811977])} zoom={props.zoomPosition ? 17 : (countries?.includes("isr")? 8 : 4)} scrollWheelZoom={true} zoomControl={renderOverlay ? true : false} style={{ height: "100vh", width: "100vw" }}>
-
+            <MapContainer center={props.zoomPosition ? props.zoomPosition : (countries?.includes("isr")? [31.7541495, 35.2258429 ]:[26.0494961, 72.0811977])} zoom={props.zoomPosition ? 17 : (countries?.includes("isr")? 8 : 4)} scrollWheelZoom={true} zoomControl={renderOverlay ? true : false} style={{ height: "100vh", width: "100vw" }} ref={mapRef}>
                 <LayersControl position="bottomright">
                     <LayersControl.BaseLayer checked name="Dark">
                         <TileLayer
@@ -146,7 +152,7 @@ const Map = props => {
                         />
                     </LayersControl.BaseLayer>
                 </LayersControl>
-                {disable(renderOverlay)}
+                
                 {
                 regions?.map((region) => {
                     console.log(countries?.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase()))
