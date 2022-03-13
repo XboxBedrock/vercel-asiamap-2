@@ -12,11 +12,17 @@ import AccountButton from "./AccountButton";
 import Link from "next/link";
 import {AnimatePresence, motion} from "framer-motion"
 import RegionDialog from "./RegionDialog";
+import { useRouter } from 'next/router';
+import wc from 'which-country';
 
 const Map = props => {
     const [regions, setRegions] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogData, setDialogData] = useState(null);
+    const router = useRouter();
+    const query = router?.query;
+    const countries = query?.countries?.split(","); 
+    console.log(countries);
 
     useEffect(() => {
         axios.get("/api/data/").then((result) => {
@@ -135,8 +141,11 @@ const Map = props => {
 
                 {
                 regions?.map((region) => {
-                    return (
-                        <Polygon pathOptions={region.useruuid !== "EVENT" ? { fillColor: 'blue' }:{color: 'red',fillColor: 'red'}} positions={JSON.parse(region.data)} key={region.uid} eventHandlers={{click: () => {openDialog(region.uid)}}}>
+                    console.log(countries?.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase()))
+                    console.log((countries?.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase())))
+                    if (countries) {if ((countries.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase()))) return (
+
+                            <Polygon pathOptions={region.useruuid !== "EVENT" ? { fillColor: 'blue' }:{color: 'red',fillColor: 'red'}} positions={JSON.parse(region.data)} key={region.uid} eventHandlers={{click: () => {openDialog(region.uid)}}}>
                             <Tooltip style={{width: "100%"}} sticky>
                                 <div >
                                     <img src={region.useruuid !== "EVENT" ? `https://crafatar.com/avatars/${region.useruuid}`:"/logo.png"} className="w-1/2 h-1/2" alt=""/>
@@ -148,7 +157,27 @@ const Map = props => {
                                 </div>
                             </Tooltip>
                         </Polygon>
+                        
+                        
+                    )} else {
+                        return (
+
+                            <Polygon pathOptions={region.useruuid !== "EVENT" ? { fillColor: 'blue' }:{color: 'red',fillColor: 'red'}} positions={JSON.parse(region.data)} key={region.uid} eventHandlers={{click: () => {openDialog(region.uid)}}}>
+                            <Tooltip style={{width: "100%"}} sticky>
+                                <div >
+                                    <img src={region.useruuid !== "EVENT" ? `https://crafatar.com/avatars/${region.useruuid}`:"/logo.png"} className="w-1/2 h-1/2" alt=""/>
+                                    <div className="mt-3">
+                                        <b >{region.username}</b>
+                                        <p className="m-0">{region.city}</p>
+                                        <p className="text-gray-300 italic text-xs m-0"><Moment date={region.createdDate} format="DD.MM.YYYY" /></p>
+                                    </div>
+                                </div>
+                            </Tooltip>
+                        </Polygon>
+                        
+                        
                     )
+                    }
                 })
             }
 
