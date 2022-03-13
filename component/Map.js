@@ -104,7 +104,7 @@ const Map = props => {
 
                 </div>
             </a>
-            <MapContainer center={props.zoomPosition ? props.zoomPosition : [26.0494961, 72.0811977]} zoom={props.zoomPosition ? 17 : 7} scrollWheelZoom={true} style={{ height: "100vh", width: "100vw" }}>
+            <MapContainer center={props.zoomPosition ? props.zoomPosition : (countries?.includes("isr")? [31.7541495, 35.2258429 ]:[26.0494961, 72.0811977])} zoom={props.zoomPosition ? 17 : (countries?.includes("isr")? 8 : 4)} scrollWheelZoom={true} style={{ height: "100vh", width: "100vw" }}>
 
                 <LayersControl position="bottomright">
                     <LayersControl.BaseLayer checked name="Dark">
