@@ -1,14 +1,29 @@
-const wc = require('which-country');
-const connection = require('../../mysql').getConnection();
+const connection = require('../../../mysql').getConnection();
+//@ts-check
+
+function wc (region) {
+    if (region["city"].split("-").length === 4) {
+        return (region["city"].split(" - ")[1])?.toLowerCase()?.trim();
+    }
+    else if (region["city"].split("-").length === 3) {
+        return (region["city"].split( "-")[1].toLowerCase())?.toLowerCase()?.trim();
+    }
+    else if (region["city"].split("-").length <= 2) {
+        return (region["city"].split("-")[0].split("] ")[1])?.toLowerCase()?.trim();
+    }
+    else {
+        return null;
+    }
+}
 
 export default async (req, res) => {
-    connection.query("SELECT city, data, area FROM regions;", async function (error, results, fields) {
+    connection.query("SELECT city FROM regions;", async function (error, results, fields) {
         if (!error) {
             if(results.length === 0) {
                 res.status(404).send("error: " + error)
                 return ;
             }
-            const countries = new Map();
+            const cities = new Map();
             for (const region of results) {
                 let count = 1;
                 if (region["city"].split(" - ").length === 4) {
@@ -26,12 +41,12 @@ export default async (req, res) => {
                         count = parseInt(region["city"].split(" - ")[1]);
                     }
                 }
-                const country = wc(JSON.parse(region.data)[0].reverse());
-                if (!country) continue;
-                if (countries.has(country)) count += countries.get(country);
-                countries.set(country, count)
+                const city = wc(region);
+                if (!city) continue;
+                if (cities.has(city)) count += cities.get(city);
+                cities.set(city, count)
             }
-            return res.json(Object.fromEntries(countries));
+            return res.json(Object.fromEntries(cities));
         } else {
             res.send("error: " + error)
         }
