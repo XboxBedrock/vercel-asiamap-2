@@ -1,12 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import axios from "axios";
 import Link from 'next/link'
+import _ from 'lodash'
+import countries from "i18n-iso-countries"
 
-
+countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
 const stats = props => {
     const [regions, setRegions] = useState(null);
     const [stats, setStats] = useState(null);
     const [leaderboard, setLeaderboard] = useState(null);
+    const [countryboard, setCountryboard] = useState(null);
     const [loading, setLoading] = useState(true);
     const Loader = () => {
         return (
@@ -33,6 +36,12 @@ const stats = props => {
                 axios.get("/api/leaderboard/").then((result) => {
                     setLeaderboard(result.data);
                     setLoading(false)
+                    axios.get("/api/countryStats/").then((result) => {
+                        setCountryboard(_.sortBy(Object.entries(result.data), [function(o) { return o[1]; }]).reverse());
+                        setLoading(false)
+                    }).catch((err) => {
+                        alert("An error occurred! " + err.message)
+                    })
                 }).catch((err) => {
                     alert("An error occurred! " + err.message)
                 })
@@ -51,7 +60,7 @@ const stats = props => {
         <div className="h-screen w-screen bg-gray-900 flex justify-center items-center">
 
 
-            <div className="w-3/4 h-2/3 bg-gray-800 text-white rounded-lg shadow-lg p-8 pt-10">
+            <div className="w-3/4 h-2/3 bg-gray-800 text-white rounded-lg shadow-lg p-8 pt-10 overflow-body">
                 <div className={"flex items-center"}>
                     <Link href={"/"}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -89,6 +98,24 @@ const stats = props => {
                                     <div className="table-row">
                                         <div className="table-cell font-bold">{user.username}</div>
                                         <div className="table-cell text-right">{user.NUM}m² ({((parseInt(user.NUM)/ parseInt(stats.totalArea))*100).toFixed(2)}%)</div>
+                                    </div>
+                                )
+                            })
+                        }
+
+                    </div>
+                </div>
+                <h1 className="text-4xl font-bold mt-5">CountryBoard™</h1>
+                <hr className="border-2 rounded-full border-gray-700 my-2"/>
+                <div className="table w-full">
+                    <div className="table-row-group">
+                        {
+                            countryboard &&
+                            countryboard.map((user) => {
+                                return (
+                                    <div className="table-row">
+                                        <div className="table-cell font-bold">{countries.getName(user[0], "en")}</div>
+                                        <div className="table-cell text-right">{user[1]} buildings</div>
                                     </div>
                                 )
                             })
