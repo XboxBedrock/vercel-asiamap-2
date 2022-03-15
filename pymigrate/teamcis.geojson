@@ -41777,7 +41777,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "[ru] Москва - Зеленоград - 10-й микрорайон - Лес - 0",
+        "name": "[ru] Москва - Зеленоград - 10-й микрорайон - 0",
         "description": "by v4siv#5838"
       },
       "geometry": {
@@ -63408,7 +63408,7 @@
       "type": "Feature",
       "properties": {
         "description": "by Daniil_Vi#5353",
-        "name": "[ru] Омск - Военный 18-й городок - 227 Магазин"
+        "name": "[ru] Омск - Военный 18-й городок - 227"
       },
       "geometry": {
         "type": "Polygon",
@@ -94666,7 +94666,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "[ua] Донецька область - Маріуполь - Пост-Мост 0",
+        "name": "[ua] Донецька область - Маріуполь - 0",
         "description": "by Av1ks#6493"
       },
       "geometry": {

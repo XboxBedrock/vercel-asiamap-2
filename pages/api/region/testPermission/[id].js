@@ -11,12 +11,13 @@ export default async (req, res) => {
     const session = await getSession({ req })
 
     if(req.body && req.body.email) {
-        if(JSON.parse(process.env.ALLOW_EVERYTHING).includes(session.user.email)) {
+        if(JSON.parse(process.env.ALLOW_EVERYTHING).includes(req.body.email)) {
             res.send(true);
             return;
         }
         connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [req.body.email], (error, user) => {
             if (!error) {
+                console.log(user)
                 if(!user[0] || !user[0].mcuuid) {
                     res.send(false);
                     return;

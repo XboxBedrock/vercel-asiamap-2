@@ -166,6 +166,7 @@ const Map = props => {
                                     <div className="mt-3">
                                         <b >{region.username}</b>
                                         <p className="m-0">{region.city}</p>
+                                        <p className="m-0">{region.count} buildings</p>
                                         <p className="text-gray-300 italic text-xs m-0"><Moment date={region.createdDate} format="DD.MM.YYYY" /></p>
                                     </div>
                                 </div>
@@ -183,6 +184,7 @@ const Map = props => {
                                     <div className="mt-3">
                                         <b >{region.username}</b>
                                         <p className="m-0">{region.city}</p>
+                                        <p className="m-0">{region.count} building(s)</p>
                                         <p className="text-gray-300 italic text-xs m-0"><Moment date={region.createdDate} format="DD.MM.YYYY" /></p>
                                     </div>
                                 </div>

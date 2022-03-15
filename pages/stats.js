@@ -8,6 +8,7 @@ countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
 const stats = props => {
     const [regions, setRegions] = useState(null);
     const [stats, setStats] = useState(null);
+    const [totalBuildings, setTotalBuildings] = useState(null);
     const [leaderboard, setLeaderboard] = useState(null);
     const [countryboard, setCountryboard] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -49,6 +50,12 @@ const stats = props => {
             }).catch((err) => {
                 alert("An error occurred! " + err.message)
             })
+            axios.get("/api/buildingStats/").then((result) => {
+                setTotalBuildings(result.data);
+                setLoading(false)
+            }).catch((err) => {
+                alert("An error occurred! " + err.message)
+            })
         }).catch((err) => {
             alert("An error occurred! " + err.message)
         })
@@ -83,6 +90,10 @@ const stats = props => {
                         <div className="table-row">
                             <div className="table-cell font-bold">Total area claimed</div>
                             <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{stats.totalArea.toLocaleString()}m² = {(stats.totalArea / 1000000).toLocaleString()} km² (ca. {((parseInt(stats.totalArea) / 44579000000000)*100).toFixed(10).toLocaleString()}% of Asia's full area)</span>}</div>
+                        </div>
+                        <div className="table-row">
+                            <div className="table-cell font-bold">Total buildings claimed</div>
+                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{totalBuildings.totalBuildings} buildings</span>}</div>
                         </div>
                     </div>
                 </div>

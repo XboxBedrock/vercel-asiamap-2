@@ -18,6 +18,9 @@ const RegionDialog = props => {
     const [session, setSession] = useState(null);
     const [addUserField, setAddUserField] = useState("")
     const [changeCityNameField, setChangeCityNameField] = useState("")
+    const [changeRegionNameField, setChangeRegionNameField] = useState("")
+    const [changeCountNameField, setChangeCountNameField] = useState(1)
+    const [changeSubregionNameField, setChangeSubregionNameField] = useState("")
     const [transferRegionField, setTransferRegionField] = useState("")
     useEffect(() => {
         getSession().then((session) => {
@@ -132,6 +135,75 @@ const RegionDialog = props => {
         })
     }
 
+    const changeRegionName = (e) => {
+        e.preventDefault();
+        axios.post(`/api/region/changeRegion/${props.uid}`, {region: changeRegionNameField}, ).then(() => {
+            toast.dark(`✅ Changed the region name to ${changeRegionNameField}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            props.setDialogOpen(false)
+            props.updateData();
+        }).catch((err) => {
+            alert("An error occurred! " + err.message)
+        })
+    }
+
+    const changeSubregionName = (e) => {
+        e.preventDefault();
+        axios.post(`/api/region/changeSubregion/${props.uid}`, {subregion: changeSubregionNameField}, ).then(() => {
+            toast.dark(`✅ Changed the subregion name to ${changeSubregionNameField}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            props.setDialogOpen(false)
+            props.updateData();
+        }).catch((err) => {
+            alert("An error occurred! " + err.message)
+        })
+    }
+
+    const changeCount = (e) => {
+        e.preventDefault();
+        if (Number.isNaN(parseInt(changeCountNameField))) {
+            toast.dark(`❌ Make sure the count is a number`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            return
+        }
+        axios.post(`/api/region/changeCount/${props.uid}`, {count: changeCountNameField}, ).then(() => {
+            toast.dark(`✅ Changed the count to ${changeCountNameField}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            props.setDialogOpen(false)
+            props.updateData();
+        }).catch((err) => {
+            alert("An error occurred! " + err.message)
+        })
+    }
+
     const copyToClipboard = (text) => {
         toast.dark(`✅ Command copied successfully!`, {
             position: "top-right",
@@ -230,12 +302,24 @@ const RegionDialog = props => {
                                         <td className="text-right">{region.city}</td>
                                     </tr>
                                     <tr>
+                                        <td>Region</td>
+                                        <td className="text-right">{region.region}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sub-region</td>
+                                        <td className="text-right">{region.subregion}</td>
+                                    </tr>
+                                    <tr>
                                         <td>Created</td>
                                         <td className="text-right"><Moment date={region.createdDate} format="DD.MM.YYYY HH:mm"/></td>
                                     </tr>
                                     <tr>
                                         <td>Area</td>
                                         <td className="text-right">{region.area}m²</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Buildings</td>
+                                        <td className="text-right">{region.count} building(s)</td>
                                     </tr>
                                     <tr>
                                         <td>Center Coordinates</td>
@@ -290,7 +374,6 @@ const RegionDialog = props => {
                                         </div>
                                     </form>
                                     {
-                                        allowCityChange &&
                                         <form onSubmit={changeCityName}>
                                             <div className="grid grid-cols-5 gap-4 mb-3">
                                                 <div className="col-span-4">
@@ -304,7 +387,48 @@ const RegionDialog = props => {
                                             </div>
                                         </form>
                                     }
-
+                                    {
+                                        <form onSubmit={changeRegionName}>
+                                            <div className="grid grid-cols-5 gap-4 mb-3">
+                                                <div className="col-span-4">
+                                                    <input placeholder="New region name" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={changeRegionNameField} onChange={(e) => setChangeRegionNameField(e.target.value)}/>
+                                                </div>
+                                                <div>
+                                                    <button type="submit"
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white text-base font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white transition w-full">Change
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    }
+                                    {
+                                        <form onSubmit={changeSubregionName}>
+                                            <div className="grid grid-cols-5 gap-4 mb-3">
+                                                <div className="col-span-4">
+                                                    <input placeholder="New subregion name" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={changeSubregionNameField} onChange={(e) => setChangeSubregionNameField(e.target.value)}/>
+                                                </div>
+                                                <div>
+                                                    <button type="submit"
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white text-base font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white transition w-full">Change
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    }
+                                    {
+                                        <form onSubmit={changeCount}>
+                                            <div className="grid grid-cols-5 gap-4 mb-3">
+                                                <div className="col-span-4">
+                                                    <input placeholder="New count name" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={changeCountNameField} onChange={(e) => setChangeCountNameField(e.target.value)}/>
+                                                </div>
+                                                <div>
+                                                    <button type="submit"
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white text-base font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white transition w-full">Change
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    }
 
 
                                     <button onClick={() => deleteRegion()}
