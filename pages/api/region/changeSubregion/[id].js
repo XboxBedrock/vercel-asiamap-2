@@ -10,7 +10,8 @@ export default async (req, res) => {
     const session = await getSession({ req })
 
     if (req.method === 'POST') {
-        const hasPerm = await axios.post(`http://localhost:3000/api/region/testPermission/${id}`, {email: session.user.email})
+        const protocol = req.protocol;
+        const hasPerm = await axios.post(`${protocol}://${req.headers.host}/api/region/testPermission/${id}`, {email: session.user.email})
         if(hasPerm.data === true) {
             connection.query("UPDATE `regions` SET `subregion`=? WHERE `uid`=?", [req.body.subregion, id], (err) => {
                 if (!err) {

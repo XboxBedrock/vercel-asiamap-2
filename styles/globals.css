@@ -10,3 +10,15 @@
 .overflow-body::-webkit-scrollbar {
     display: none;
 }
+
+.regionDialog {
+    overflow-y: auto;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    height: 70vh;
+    width: 30vw;
+}
+
+.regionDialog::-webkit-scrollbar {
+    display: none;
+}

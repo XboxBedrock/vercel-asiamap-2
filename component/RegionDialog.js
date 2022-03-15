@@ -283,10 +283,10 @@ const RegionDialog = props => {
                 </div>
             }
 
-            <AnimatePresence>
+            <AnimatePresence >
                 {
                     !loading &&
-                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}>
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className='regionDialog'>
                         <div className="flex m-5 items-center">
                             <img src={region.useruuid !== "EVENT" ? `https://crafatar.com/avatars/${region.useruuid}`:"/logo.png"} alt="" className="mr-2" width="40" height="40"/>
                             <p className="text-4xl font-black ">{region.username}</p>

@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip, LayersControl} from "react-leaflet";
+import {MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip, LayersControl, withLeaflet} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
@@ -119,7 +119,7 @@ const Map = props => {
                 </div>)
                 }
             </a>
-            <MapContainer center={props.zoomPosition ? props.zoomPosition : (countries?.includes("isr")? [31.7541495, 35.2258429 ]:[26.0494961, 72.0811977])} zoom={props.zoomPosition ? 17 : (countries?.includes("isr")? 8 : 4)} scrollWheelZoom={true} zoomControl={renderOverlay ? true : false} style={{ height: "100vh", width: "100vw" }} ref={mapRef}>
+            <MapContainer center={props.zoomPosition ? props.zoomPosition : (countries?.includes("isr")? [31.7541495, 35.2258429 ]:[26.0494961, 72.0811977])} zoom={props.zoomPosition ? 17 : (countries?.includes("isr")? 8 : 4)} scrollWheelZoom={true} zoomControl={renderOverlay ? true : false} style={{ height: "100vh", width: "100vw" }} ref={mapRef} preferCanvas={true}>
                 <LayersControl position="bottomright">
                     <LayersControl.BaseLayer checked name="Dark">
                         <TileLayer
@@ -155,8 +155,6 @@ const Map = props => {
                 
                 {
                 regions?.map((region) => {
-                    console.log(countries?.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase()))
-                    console.log((countries?.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase())))
                     if (countries) {if ((countries.includes(wc(JSON.parse(region.data)[0].reverse())?.toLowerCase()))) return (
 
                             <Polygon pathOptions={region.useruuid !== "EVENT" ? { fillColor: 'blue' }:{color: 'red',fillColor: 'red'}} positions={JSON.parse(region.data)} key={region.uid} eventHandlers={{click: () => {openDialog(region.uid)}}}>
