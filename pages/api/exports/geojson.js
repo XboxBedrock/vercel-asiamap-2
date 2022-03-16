@@ -2,6 +2,13 @@ const wc = require('which-country');
 const connection = require('../../../mysql').getConnection();
 const rewind = require('@mapbox/geojson-rewind');
 
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+function capitalizeFirstLetter(string) {
+    return string.split("-").map((strin) => capitalize(strin).trim()).join("-");
+}
+
 export default async (req, res) => {
     connection.query("SELECT * FROM regions;", async function (error, results, fields) {
         if (!error) {
@@ -16,20 +23,21 @@ export default async (req, res) => {
             for (const region of results) {
                 let regionName = `[${wc(JSON.parse(region.data)[0].reverse())}] `;
                 if (region.region.toLowerCase() !== "n/a") {
-                    regionName += region.region.toLowerCase() + " - ";
+                    regionName += capitalizeFirstLetter(region.region) + " - ";
                 }
                 if (region.subregion.toLowerCase() !== "n/a") {
-                    regionName += region.subregion.toLowerCase() + " - ";
+                    regionName += capitalizeFirstLetter(region.subregion) + " - ";
                 }
                 if (region.city.toLowerCase() !== "n/a") {
-                    regionName += region.city.toLowerCase() 
+                    regionName += capitalizeFirstLetter(region.city)
                 }
                 const ring = [...JSON.parse(region.data).map(coord => coord.reverse()), JSON.parse(region.data)[0].reverse()];
                 if (ring.length < 4) continue;
                 const feature = {
                     "type": "Feature",
                     "properties": {
-                        "name": `${regionName} - ${region.area} - ${region.count} - ${region.type} - ${region.username}`,
+                        "name": `${regionName} - ${region.count} - ${region.type}`,
+                        "description": `By ${region.username}`,
                     },
                     "geometry": {
                         "type": "Polygon",
