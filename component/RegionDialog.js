@@ -22,6 +22,7 @@ const RegionDialog = props => {
     const [changeCountNameField, setChangeCountNameField] = useState(1)
     const [changeSubregionNameField, setChangeSubregionNameField] = useState("")
     const [transferRegionField, setTransferRegionField] = useState("")
+    const [transferTypeField, setTransferTypeField] = useState("")
     useEffect(() => {
         getSession().then((session) => {
             setSession(session)
@@ -158,6 +159,25 @@ const RegionDialog = props => {
         e.preventDefault();
         axios.post(`/api/region/changeSubregion/${props.uid}`, {subregion: changeSubregionNameField}, ).then(() => {
             toast.dark(`✅ Changed the subregion name to ${changeSubregionNameField}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            props.setDialogOpen(false)
+            props.updateData();
+        }).catch((err) => {
+            alert("An error occurred! " + err.message)
+        })
+    }
+
+    const changeTypeName = (e) => {
+        e.preventDefault();
+        axios.post(`/api/region/changeType/${props.uid}`, {type: transferTypeField}, ).then(() => {
+            toast.dark(`✅ Changed the type to ${transferTypeField}`, {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
@@ -328,6 +348,10 @@ const RegionDialog = props => {
                                             {getCentroid2(JSON.parse(region.data))[1].toFixed(5)}
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td>Type</td>
+                                        <td className="text-right">{region.type}</td>
+                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -419,7 +443,21 @@ const RegionDialog = props => {
                                         <form onSubmit={changeCount}>
                                             <div className="grid grid-cols-5 gap-4 mb-3">
                                                 <div className="col-span-4">
-                                                    <input placeholder="New count name" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={changeCountNameField} onChange={(e) => setChangeCountNameField(e.target.value)}/>
+                                                    <input placeholder="New count" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={changeCountNameField} onChange={(e) => setChangeCountNameField(e.target.value)}/>
+                                                </div>
+                                                <div>
+                                                    <button type="submit"
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white text-base font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white transition w-full">Change
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    }
+                                    {
+                                        <form onSubmit={changeTypeName}>
+                                            <div className="grid grid-cols-5 gap-4 mb-3">
+                                                <div className="col-span-4">
+                                                    <input placeholder="New type" className="focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border border-gray-300 rounded-md shadow-lg h-full focus:outline-none" value={transferTypeField} onChange={(e) => setTransferTypeField(e.target.value)}/>
                                                 </div>
                                                 <div>
                                                     <button type="submit"

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@agney/react-loading": "^0.1.2",
+    "@mapbox/geojson-rewind": "^0.5.1",
     "@socialgouv/matomo-next": "^1.1.2",
     "@tailwindcss/forms": "^0.2.1",
     "algoliasearch": "^4.8.5",

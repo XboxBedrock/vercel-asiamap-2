@@ -16,7 +16,7 @@ export default async (req, res) => {
             connection.query("UPDATE `regions` SET `region`=? WHERE `uid`=?", [req.body.region, id], (err) => {
                 if (!err) {
                     index.partialUpdateObject({
-                        city: req.body.city,
+                        region: req.body.region,
                         objectID: id
                     }).then(() => {
                         res.send("ok");
