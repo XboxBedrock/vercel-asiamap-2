@@ -93,7 +93,7 @@ const stats = props => {
                         </div>
                         <div className="table-row">
                             <div className="table-cell font-bold">Total buildings claimed</div>
-                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{totalBuildings.totalBuildings} buildings</span>}</div>
+                            <div className="table-cell text-right">{loading && <Loader />}{stats && !loading && <span>{totalBuildings?.totalBuildings || 0} buildings</span>}</div>
                         </div>
                     </div>
                 </div>
