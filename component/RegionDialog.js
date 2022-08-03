@@ -5,7 +5,7 @@ import {
 } from '@agney/react-loading';
 import {motion, AnimatePresence} from "framer-motion";
 import Moment from "react-moment";
-import { getSession } from 'next-auth/client'
+import { getSession } from 'next-auth/react'
 import {toast} from "react-toastify";
 
 
@@ -33,9 +33,9 @@ const RegionDialog = props => {
                 axios.get(`/api/region/addBuilders/${props.uid}`).then((result) => {
                     setAdditionalBuilders(result.data);
                     if(session) {
-                        axios.post(`/api/region/testPermission/${props.uid}`, {email: session.user.email}).then((result) => {
+                        axios.post(`/api/region/testPermission/${props.uid}`, {email: session.user.email, name:  session.user.name}).then((result) => {
                             setEditPerms(result.data);
-                            axios.post(`/api/region/testPermission/allowCityChange/${props.uid}`, {email: session.user.email}).then((result) => {
+                            axios.post(`/api/region/testPermission/allowCityChange/${props.uid}`, {email: session.user.email, name: session.user.name}).then((result) => {
                                 setAllowCityChange(result.data);
                                 setLoading(false);
                             }).catch((err) => {
@@ -308,7 +308,7 @@ const RegionDialog = props => {
                     !loading &&
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className='regionDialog'>
                         <div className="flex m-5 items-center">
-                            <img src={region.useruuid !== "EVENT" ? `https://crafatar.com/avatars/${region.useruuid}`:"/logo.png"} alt="" className="mr-2" width="40" height="40"/>
+                            <img src={region.useruuid !== "EVENT" ? `https://minotar.net/helm/${region.username.replaceAll(/n\/a/gi, "IHG_Steve").replaceAll(/([*/])/g, "")}`:"/logo.png"} alt="" className="mr-2" width="40" height="40"/>
                             <p className="text-4xl font-black ">{region.username}</p>
 
                         </div>

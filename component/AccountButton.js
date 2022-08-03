@@ -1,9 +1,9 @@
 import React from 'react';
-import {signIn, signOut, useSession} from 'next-auth/client'
+import {signIn, signOut, useSession} from 'next-auth/react'
 import {useRouter} from "next/router";
 
 const AccountButton = props => {
-    const [session, loading] = useSession()
+    const { data: session, loading} = useSession()
     const router = useRouter()
     if (router?.query?.overlay !== "false") return (
         <div>

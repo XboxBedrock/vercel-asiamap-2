@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@agney/react-loading": "^0.1.2",
@@ -20,16 +21,20 @@
     "i18n-iso-countries": "^7.3.0",
     "jquery": "^3.6.0",
     "json2csv": "^5.0.7",
-    "leaflet": "^1.7.1",
+    "leaflet": "^1.8.0",
     "leaflet-defaulticon-compatibility": "^0.1.1",
+    "leaflet-draw": "^1.0.4",
+    "leaflet-editable": "^1.2.0",
     "leaflet-geosearch": "^3.2.1",
     "leaflet.markercluster": "^1.5.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "next": "10.0.6",
-    "next-auth": "^3.4.0",
+    "next-auth": "4",
+    "patch-package": "^6.4.7",
     "postcss": "^8.2.5",
+    "postinstall-postinstall": "^2.1.0",
     "react": "17.0.1",
     "react-autosuggest": "^10.1.0",
     "react-dom": "17.0.1",
@@ -37,6 +42,8 @@
     "react-instantsearch-dom": "^6.9.0",
     "react-leaflet": "^3.1.0",
     "react-leaflet-deflate": "^2.2.1",
+    "react-leaflet-draw": "^0.20.1",
+    "react-leaflet-editable": "^0.2.2",
     "react-leaflet-vectorgrid": "^2.2.1",
     "react-moment": "^1.1.1",
     "react-no-ssr": "^1.1.0",
@@ -44,5 +51,8 @@
     "sync-fetch": "^0.3.1",
     "tailwindcss": "^2.0.3",
     "which-country": "^1.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

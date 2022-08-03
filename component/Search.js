@@ -4,6 +4,7 @@ import Autosuggest from "react-autosuggest";
 import {useRouter} from "next/router";
 import algoliasearch from "algoliasearch/lite";
 
+
 const Search = props => {
     const router = useRouter()
     const searchClient = algoliasearch(

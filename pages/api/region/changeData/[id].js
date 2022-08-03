@@ -13,10 +13,10 @@ export default async (req, res) => {
         const protocol = req.protocol;
         const hasPerm = await axios.post(`${protocol}://${req.headers.host}/api/region/testPermission/${id}`, {email: session.user.email, name: session.user.name})
         if(hasPerm.data === true) {
-            connection.query("UPDATE `regions` SET `region`=? WHERE `uid`=?", [req.body.region, id], (err) => {
+            connection.query("UPDATE `regions` SET `data`=? WHERE `uid`=?", [req.body.data, id], (err) => {
                 if (!err) {
                     index.partialUpdateObject({
-                        region: req.body.region,
+                        data: req.body.data,
                         objectID: id
                     }).then(() => {
                         res.send("ok");

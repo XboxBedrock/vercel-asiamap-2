@@ -1,10 +1,11 @@
 import '../styles/globals.css'
 import React, {useEffect} from "react";
-import { Provider } from 'next-auth/client'
+import { SessionProvider } from "next-auth/react"
 import {ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import {useRouter} from "next/router";
 import { useState } from 'react';
+import ErrorBoundary from '../component/ErrorBoundary';
 
 
 function SafeHydrate({ children }) {
@@ -20,16 +21,18 @@ function MyApp({ Component, pageProps }) {
   const router = useRouter()
   console.log(router.query)
   return (
+    <ErrorBoundary>
     <SafeHydrate>
-      <Provider session={pageProps.session}>
+      <SessionProvider session={pageProps.session}>
           <head>
               <link rel="icon" href="/logo.png"/>
           </head>
 
           <ToastContainer />
         <Component {...pageProps} />
-      </Provider>
+      </SessionProvider>
       </SafeHydrate>
+      </ErrorBoundary>
   )
 }
 

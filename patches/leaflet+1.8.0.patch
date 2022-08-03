@@ -1,0 +1,14 @@
+diff --git a/node_modules/leaflet/dist/leaflet-src.js b/node_modules/leaflet/dist/leaflet-src.js
+index e960ea0..e429e19 100644
+--- a/node_modules/leaflet/dist/leaflet-src.js
++++ b/node_modules/leaflet/dist/leaflet-src.js
+@@ -4347,7 +4347,8 @@
+ 
+   	_isClickDisabled: function (el) {
+   		while (el !== this._container) {
+-  			if (el['_leaflet_disable_click']) { return true; }
++			const elLeafClick = el?.['_leaflet_disable_click'] === undefined? true: el?.['_leaflet_disable_click']
++  			if (elLeafClick) { return true; }
+   			el = el.parentNode;
+   		}
+   	},

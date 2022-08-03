@@ -1,4 +1,4 @@
-import {getSession} from "next-auth/client";
+import {getSession} from "next-auth/react";
 
 const connection = require('../../../../mysql').getConnection();
 
@@ -30,11 +30,37 @@ export default async (req, res) => {
                 })
                 return;
             }
-            connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [session.user.email], (error, user) => {
+            if (session.user.email) connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [session.user.email], (error, user) => {
                 if (!error) {
                     connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
                         if (!error) {
                             if(user[0].mcuuid === region[0].useruuid) {
+
+                                connection.query("INSERT INTO `additionalBuilders` (`regionuid`, `username`) VALUES (?, ?);",[id, req.body.username], function (error, results, fields) {
+                                    if (!error) {
+                                        res.json(results);
+                                    } else {
+                                        res.send("error: " + error)
+                                    }
+                                })
+
+                            } else {
+                                res.status(401).send("not authorized")
+                            }
+                        } else {
+                            res.send("error: " + error)
+                        }
+                    })
+                } else {
+                    res.send("error: " + error)
+                }
+            })
+
+            if (session.user.name) connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+                if (!error) {
+                    connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+                        if (!error) {
+                            if(session.user.name === region[0].username) {
 
                                 connection.query("INSERT INTO `additionalBuilders` (`regionuid`, `username`) VALUES (?, ?);",[id, req.body.username], function (error, results, fields) {
                                     if (!error) {
@@ -73,7 +99,7 @@ export default async (req, res) => {
             return;
         }
         if(req.body && req.body.username) {
-            connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [session.user.email], (error, user) => {
+            if (session.user.email) connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [session.user.email], (error, user) => {
                 if (!error) {
                     connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
                         if (!error) {
@@ -98,9 +124,37 @@ export default async (req, res) => {
                     res.send("error: " + error)
                 }
             })
+
+            if (session.user.name) connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+                if (!error) {
+                    connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+                        if (!error) {
+                            if(session.user.name === region[0].username) {
+
+                                connection.query("DELETE FROM `additionalBuilders` WHERE  `regionuid`=? AND `username`=? LIMIT 1;",[id, req.body.username], function (error, results, fields) {
+                                    if (!error) {
+                                        res.json(results);
+                                    } else {
+                                        res.send("error: " + error)
+                                    }
+                                })
+
+                            } else {
+                                res.status(401).send("not authorized")
+                            }
+                        } else {
+                            res.send("error: " + error)
+                        }
+                    })
+                } else {
+                    res.send("error: " + error)
+                }
+            })
         } else {
             res.status(400).send("no username in body");
         }
+    
+        
 
     }
 

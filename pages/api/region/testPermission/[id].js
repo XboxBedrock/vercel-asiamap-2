@@ -1,4 +1,4 @@
-import {getSession} from "next-auth/client";
+import {getSession} from "next-auth/react";
 
 const connection = require('../../../../mysql').getConnection();
 
@@ -34,7 +34,14 @@ export default async (req, res) => {
             }
         })
     }
-
-
+    if(req.body && req.body.name) {
+        connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+            if (!error) {
+                res.send(req.body.name === region[0].username)
+            } else {
+                res.send("error: " + error)
+            }
+        })
+    }
 
 }
