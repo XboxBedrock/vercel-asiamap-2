@@ -8,6 +8,8 @@ export default async (req, res) => {
     } = req
     const session = await getSession({ req })
 
+    console.log(req.method)
+
     if (req.method === 'GET') {
         connection.query("SELECT * FROM `regions` WHERE `uid`=?", [id], function (error, results, fields) {
             if (!error) {
@@ -17,6 +19,7 @@ export default async (req, res) => {
             }
         })
     } else if (req.method === 'DELETE') {
+        console.log(session.user)
         if(JSON.parse(process.env.ALLOW_EVERYTHING).includes(session.user.email)) {
             connection.query("DELETE FROM `regions` WHERE  `uid`=?", [id], function (error, results, fields) {
                 if (!error) {
@@ -29,6 +32,30 @@ export default async (req, res) => {
                 }
             })
             return;
+        }
+        if(session.user.name) {
+            connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
+                if (!error) {
+                    console.log(session.user.name)
+                    if (session.user.name.toLowerCase() === region[0].username.toLowerCase()) {
+                        connection.query("DELETE FROM `regions` WHERE  `uid`=?", [id], function (error, results, fields) {
+                            if (!error) {
+                                index.deleteObjects([id]).then(() => {
+                                    res.send("ok");
+                                })
+
+                            } else {
+                                res.send("error: " + error)
+                            }
+                        })
+                    } else {
+                        console.log(error)
+                        res.status(401).send("not authorized")
+                    }
+                } else {
+                    res.send("error: " + error)
+                }
+            })
         }
         if (session.user.email) connection.query("SELECT * FROM `userLinks` WHERE `discordMail`=?", [session.user.email], (error, user) => {
             if (!error) {
@@ -56,28 +83,7 @@ export default async (req, res) => {
                 res.send("error: " + error)
             }
         })
-        else if(session.user.name) {
-            connection.query("SELECT * FROM `regions` WHERE `uid`=?",[id], function (error, region, fields) {
-                if (!error) {
-                    if (req.body.name === region[0].username) {
-                        connection.query("DELETE FROM `regions` WHERE  `uid`=?", [id], function (error, results, fields) {
-                            if (!error) {
-                                index.deleteObjects([id]).then(() => {
-                                    res.send("ok");
-                                })
 
-                            } else {
-                                res.send("error: " + error)
-                            }
-                        })
-                    } else {
-                        res.status(401).send("not authorized")
-                    }
-                } else {
-                    res.send("error: " + error)
-                }
-            })
-        } 
     } else if (req.method === "POST") {
         if(JSON.parse(process.env.ALLOW_EVERYTHING).includes(session.user.email)) {
 
