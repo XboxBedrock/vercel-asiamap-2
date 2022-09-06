@@ -10,7 +10,7 @@ function capitalizeFirstLetter(string) {
 }
 
 export default async (req, res) => {
-    await connection.query("SELECT * FROM regions;", async function (error, results, fields) {
+    connection.query("SELECT * FROM regions;", async function (error, results, fields) {
         if (!error) {
             if(results.length === 0) {
                 res.status(404).send("error: " + error)
@@ -21,15 +21,23 @@ export default async (req, res) => {
                 "features": []
             }
             for (const region of results) {
+                let regionName = `[${wc(JSON.parse(region.data)[0].reverse())}] `;
+                if (region.region.toLowerCase() !== "n/a") {
+                    regionName += capitalizeFirstLetter(region.region) + " - ";
+                }
+                if (region.subregion.toLowerCase() !== "n/a") {
+                    regionName += capitalizeFirstLetter(region.subregion) + " - ";
+                }
+                if (region.city.toLowerCase() !== "n/a") {
+                    regionName += capitalizeFirstLetter(region.city)
+                }
                 const ring = [...JSON.parse(region.data).map(coord => coord.reverse()), JSON.parse(region.data)[0].reverse()];
                 if (ring.length < 4) continue;
                 const feature = {
                     "type": "Feature",
                     "properties": {
-                        "username": region.username,
-                        "userUuid": region.useruuid,
-                        "regionType": region.useruuid === "EVENT"? "event": "normal",
-                        "id": region.uid
+                        "name": `${regionName} - ${region.count} - ${region.type}`,
+                        "description": `By ${region.username}`,
                     },
                     "geometry": {
                         "type": "Polygon",
@@ -38,9 +46,9 @@ export default async (req, res) => {
                 }
                 geojson.features.push(feature);
             }
-            return await res.json(rewind(geojson, false));
+            return res.json(rewind(geojson, false));
         } else {
-            await res.send("error: " + error)
+            res.send("error: " + error)
         }
 
 

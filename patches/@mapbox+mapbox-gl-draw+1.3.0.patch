@@ -1,0 +1,26 @@
+diff --git a/node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw-unminified.js b/node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw-unminified.js
+index 975e77c..a5b9352 100644
+--- a/node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw-unminified.js
++++ b/node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw-unminified.js
+@@ -4292,7 +4292,10 @@ DirectSelect.clickActiveFeature = function (state) {
+ 
+ DirectSelect.onSetup = function(opts) {
+   var featureId = opts.featureId;
++  console.log(featureId)
++  console.log( this._ctx.store)
+   var feature = this.getFeature(featureId);
++  console.log(feature)
+ 
+   if (!feature) {
+     throw new Error('You must provide a featureId to enter direct_select mode');
+@@ -4311,8 +4314,9 @@ DirectSelect.onSetup = function(opts) {
+     selectedCoordPaths: opts.coordPath ? [opts.coordPath] : []
+   };
+ 
+-  this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
+   this.setSelected(featureId);
++  this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
++
+   doubleClickZoom.disable(this);
+ 
+   this.setActionableState({

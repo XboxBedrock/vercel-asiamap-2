@@ -33,6 +33,7 @@ const RegionDialog = props => {
                 axios.get(`/api/region/addBuilders/${props.uid}`).then((result) => {
                     setAdditionalBuilders(result.data);
                     if(session) {
+                        console.log(session.user.email)
                         axios.post(`/api/region/testPermission/${props.uid}`, {email: session.user.email, name:  session.user.name}).then((result) => {
                             setEditPerms(result.data);
                             axios.post(`/api/region/testPermission/allowCityChange/${props.uid}`, {email: session.user.email, name: session.user.name}).then((result) => {
@@ -258,7 +259,7 @@ const RegionDialog = props => {
                 });
                 return;
             }
-            axios.post(`/api/region/${props.uid}`, {useruuid: result.data.data.player.id, username: transferRegionField}, ).then(() => {
+            axios.post(`/api/region/${props.uid}`, {useruuid: result.data.data.player.id, username: transferRegionField, name: session.user.name, email: session.user.email}, ).then(() => {
                 toast.dark(`✅ Transferred region successfully`, {
                     position: "top-right",
                     autoClose: 5000,
@@ -309,58 +310,58 @@ const RegionDialog = props => {
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className='regionDialog'>
                         <div className="flex m-5 items-center">
                             <img src={region.useruuid !== "EVENT" ? `https://minotar.net/helm/${region.username.replaceAll(/n\/a/gi, "IHG_Steve").replaceAll(/([*/])/g, "")}`:"/logo.png"} alt="" className="mr-2" width="40" height="40"/>
-                            <p className="text-4xl font-black ">{region.username}</p>
+                            <p className="text-4xl font-black text-black ">{region.username}</p>
 
                         </div>
                         <div className="grid grid-cols-2 gap-4 m-5">
                             <div>
-                                <p className="font-bold border-b">General information</p>
+                                <p className="font-bold border-b text-black">General information</p>
                                 <table className="table-fixed w-full">
                                     <tbody>
                                     <tr>
-                                        <td>City</td>
-                                        <td className="text-right">{region.city}</td>
+                                        <td className= "text-black">City</td>
+                                        <td className="text-right text-black">{region.city}</td>
                                     </tr>
                                     <tr>
-                                        <td>Region</td>
-                                        <td className="text-right">{region.region}</td>
+                                        <td className= "text-black">Region</td>
+                                        <td className="text-right text-black">{region.region}</td>
                                     </tr>
                                     <tr>
-                                        <td>Sub-region</td>
-                                        <td className="text-right">{region.subregion}</td>
+                                        <td className= "text-black">Sub-region</td>
+                                        <td className="text-right text-black">{region.subregion}</td>
                                     </tr>
                                     <tr>
-                                        <td>Created</td>
-                                        <td className="text-right"><Moment date={region.createdDate} format="DD.MM.YYYY HH:mm"/></td>
+                                        <td className= "text-black">Created</td>
+                                        <td className="text-right text-black"><Moment date={region.createdDate} format="DD.MM.YYYY HH:mm"/></td>
                                     </tr>
                                     <tr>
-                                        <td>Area</td>
-                                        <td className="text-right">{region.area}m²</td>
+                                        <td className= "text-black">Area</td>
+                                        <td className="text-right text-black">{region.area}m²</td>
                                     </tr>
                                     <tr>
-                                        <td>Buildings</td>
-                                        <td className="text-right">{region.count} building(s)</td>
+                                        <td className= "text-black">Buildings</td>
+                                        <td className="text-right text-black">{region.count} building(s)</td>
                                     </tr>
                                     <tr>
-                                        <td>Center Coordinates</td>
-                                        <td className="text-right cursor-pointer" onClick={() => copyToClipboard("/tpll " + getCentroid2(JSON.parse(region.data))[0] + " " + getCentroid2(JSON.parse(region.data))[1])}>
+                                        <td className= "text-black">Center Coordinates</td>
+                                        <td className="text-right cursor-pointer text-black" onClick={() => copyToClipboard("/tpll " + getCentroid2(JSON.parse(region.data))[0] + " " + getCentroid2(JSON.parse(region.data))[1])}>
                                             {getCentroid2(JSON.parse(region.data))[0].toFixed(5)}<br />
                                             {getCentroid2(JSON.parse(region.data))[1].toFixed(5)}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Type</td>
-                                        <td className="text-right">{region.type}</td>
+                                        <td className= "text-black">Type</td>
+                                        <td className="text-right text-black">{region.type}</td>
                                     </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div>
-                                <p className="font-bold border-b">Additional builders</p>
+                                <p className="font-bold border-b text-black">Additional builders</p>
                                 <ul className="py-1">
                                     {
                                         additionalBuilders?.map((builder) => {
-                                            return (<li className="grid grid-cols-2 w-full"><img src={`https://minotar.net/avatar/${builder.username}/20`} alt=""/><p className="text-right">{builder.username}
+                                            return (<li className="grid grid-cols-2 w-full"><img src={`https://minotar.net/avatar/${builder.username}/20`} alt=""/><p className="text-right text-black">{builder.username}
                                                 {editPerms && <a href="#" className="ml-1" onClick={() => removeUser(builder.username)}>&times;</a>}</p></li>)
                                         })
                                     }
@@ -371,7 +372,7 @@ const RegionDialog = props => {
                         {
                             editPerms && <div>
                                 <div className="m-5">
-                                    <p className="text-2xl font-bold mb-3">Edit region</p>
+                                    <p className="text-2xl font-bold mb-3 text-black">Edit region</p>
                                     <form onSubmit={handleOnUserSubmit}>
                                         <div className="grid grid-cols-5 gap-4 mb-3">
                                             <div className="col-span-4">

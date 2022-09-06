@@ -1,21 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polygon,
-  Tooltip,
-  LayersControl,
-  withLeaflet,
-  FeatureGroup,
-} from "react-leaflet";
-import { EditControl } from "react-leaflet-draw";
-import L from "leaflet"
-
-import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
-import "leaflet-defaulticon-compatibility";
+import React, { forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
+import useQuery from "./hooks/useQuery";
 import axios from "axios";
 import { TailSpin } from "@agney/react-loading";
 import Moment from "react-moment";
@@ -26,23 +10,53 @@ import RegionDialog from "./RegionDialog";
 import { useRouter } from "next/router";
 import wc from "which-country";
 import $, { map } from "jquery";
-import "leaflet-draw/dist/leaflet.draw.css"
-import { toast } from "react-toastify"
+import { toast } from "react-toastify";
+import { useClipboard } from "@mantine/hooks";
+import { LoadingOverlay } from "@mantine/core";
+import { BiMapPin } from "react-icons/bi";
+import {SpotlightProvider, useSpotlight} from "@mantine/spotlight";
+import searchInOSM from "./util/SearchEngine";
+import {AiOutlineSearch} from "react-icons/ai";
+import {Box, Button, Loader} from "@mantine/core";
+import generate3DLayer from "./util/generate3DLayer";
 
 import ReactDOM from "react-dom";
-
 import { getSession } from "next-auth/react";
 
-function disable(val) {
-  if (document.getElementsByClassName("leaflet-control-layers")[0])
-    document.getElementsByClassName(
-      "leaflet-control-layers"
-    )[0].style.visibility = val ? "visible" : "hidden";
-}
+import MapboxDraw from "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw-unminified";
+//import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "mapbox-gl-style-switcher/styles.css";
+import { MapboxStyleSwitcherControl } from "mapbox-gl-style-switcher";
+import { centerOfMass, polygon } from "@turf/turf";
 
-const Map = (props) => {
-  const mapRef = useRef();
-  const [regions, setRegions] = useState(null);
+const Map = props => {
+  mapboxgl.accessToken = "pk.eyJ1IjoibmFjaHdhaGwiLCJhIjoiY2tta3ZkdXJ2MDAwbzJ1cXN3ejM5N3NkcyJ9.t2yFHFQzb2PAHvPHF16sFw";
+
+  const router = useRouter();
+  const queryRouter = router?.query;
+  console.log(queryRouter)
+  const countries = queryRouter?.countries?.split(",");
+  const query = useQuery();
+  const israel = countries?.map((e) => e.toLowerCase()).includes("isr")
+  console.log(countries);
+
+  const mapContainer = useRef(null);
+  const [map, setMap] = useState(null);
+  const [draw, setDraw] = useState(null)
+  const [lng, setLng] = useState(israel? 35.03787026841233: 74.95817856138174);
+  const [lat, setLat] = useState(israel? 31.892573864284234: 36.9073447365724);
+  const [zoom, setZoom] = useState(israel? 6.75: 2.5);
+  const [regionsUnused, setRegionsUnused] = useState({})
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+  const clipboard = useClipboard();
+  const [actions, setActions] = useState([]);
+  const [players, setPlayers] = useState([]);
+  const [playerMarkers, setPlayerMarkers] = useState([]);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [updateMap, setUpdateMap] = useState(false);
+
   const [edit, setEdit] = useState({});
   const [editID, setEditID] = useState(null);
   const [gEdit, setGEdit] = useState(false);
@@ -50,78 +64,65 @@ const Map = (props) => {
   const [dialogData, setDialogData] = useState(null);
   const [username, setUsername] = useState({ name: null, uuid: null });
   const [session, setSession] = useState(null);
-  const [reRender, setReRender] = useState({})
-  const router = useRouter();
-  const query = router?.query;
-  const renderOverlay = query.overlay === "false" ? false : true;
-  const countries = query?.countries?.split(",");
-  console.log(countries);
-  document.addEventListener('contextmenu', (e) => {
+  const [reRender, setReRender] = useState({});
+
+  
+  
+  const renderOverlay = queryRouter?.overlay === "false" ? false : true;
+
+  document.addEventListener("contextmenu", (e) => {
     e.preventDefault();
   });
 
-  function saveEdit() {
-    if (reRender[editID] !== undefined || reRender[editID] !== null) {
-        console.log(reRender[editID])
-        const remapReRender = reRender[editID].map((ele) => `[${ele.lat.toFixed(6)}, ${ele.lng.toFixed(6)}]`)
-        const coordsStr= "[" + [...remapReRender, remapReRender[0]].join(", ") + "]"
-        console.log(coordsStr)
-        axios.post(`/api/region/changeData/${editID}`, {data: coordsStr}).then(() => {
-            updateData()
-            toast.dark(`✅ Edited region id ${editID}`, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
-        }).catch((err) => {
-            alert("An error occurred! " + err.message)
-        })
-        
-    }
-    setEdit({})
-    setGEdit(false)
-    
-    setTimeout(() => {
-        const click = document.getElementsByClassName("leaflet-draw-actions")
-        // 1 is cancel 0 is save
-        click.item(0).childNodes.item(0).childNodes.item(0).click()
-        const newreRender = reRender
-        delete newreRender[editID]
-        setReRender(newreRender)
-        setEditID(null)
-    }, 0)
-  }
+  const styles = [
+   {
+      title: "Dark",
+     uri: "mapbox://styles/nachwahl/cl2nl1qes00bn14ksw5y85arm",
+    },
+    {
+      title: "Light",
+      uri: "mapbox://styles/mapbox/light-v9",
+    },
+    { title: "Outdoors", uri: "mapbox://styles/mapbox/outdoors-v11" },
+    { title: "Satellite", uri: "mapbox://styles/mapbox/satellite-streets-v11" },
+    { title: "Streets", uri: "mapbox://styles/mapbox/streets-v11" },
+  ];
 
-  function cancelEdit() {
-    setEdit({})
-    setGEdit(false)
-    const tempReRender = reRender;
-    delete tempReRender[editID]
-    setReRender(editID)
-    setEditID(null)
-    setTimeout(() => {
-        const click = document.getElementsByClassName("leaflet-draw-actions")
-        // 1 is cancel 0 is save
-        click.item(0).childNodes.item(1).childNodes.item(0).click()
-        updateData()
-    }, 0)
+  const [showSearchLoading, setShowSearchLoading] = useState(false);
+
+  const contextFunc = (e) => {
+      
+    console.log(JSON.stringify(e.features[0]))
+    console.log(username)
+    if (
+      (username.name === e.features[0].properties.username ||
+        username.uuid === e.features[0].properties.userUuid)
+    ) {
+        e.originalEvent.stopPropagation()
+        e.originalEvent.preventDefault()
+        const tProps = JSON.parse(JSON.stringify(e.features[0]))
+        tProps.id = e.features[0].properties.id
+        draw.add(tProps)
+        draw.changeMode("direct_select", {featureId: e.features[0].properties.id})
+        setEdit({...edit, [e.features[0].properties.id]: true})
+        setGEdit(true)
+        setEditID(e.features[0].properties.id)
+        console.log("clicked")
+    }
+
   }
 
   useEffect(() => {
-    axios
-      .get("/api/data/")
-      .then((result) => {
-        setRegions(result.data);
-      })
-      .catch((err) => {
-        alert("An error occurred! " + err.message);
-      });
+    if (username.name || username.uuid) {
+      if (map ) {
+        map.off("contextmenu", "regions-layer", contextFunc)
+        map.on("contextmenu", "regions-layer", contextFunc);
+      }
+      return console.log(username)
+    }
     getSession().then((session) => {
-      setSession(session);
+      console.log(session)
+      
       if (session?.user?.email)
         axios
           .post("/api/userinfo/", { email: session.user.email })
@@ -131,10 +132,342 @@ const Map = (props) => {
           .catch((err) => {
             alert("An error occurred! " + err.message);
           });
-      if (session?.user?.name)
+      if (session?.user?.name) {
+        console.log(session.user.name)
         setUsername({ name: session.user.name, uuid: username.uuid });
+        console.log(username)
+      }
+      setSession(session);
     });
-  }, []);
+  }, [username, map])
+
+  useEffect(() => {
+    if (map) return; // initialize map only once
+    class HidePlayerControl {
+      
+      onAdd(map) {
+        this.hidePlayers = renderOverlay;
+        this.map = map;
+        this.container = document.createElement("div");
+        this.container.classList.add("mapboxgl-ctrl");
+        this.container.classList.add("mapboxgl-ctrl-group");
+        this.playerButton = document.createElement("button");
+        this.playerButton.type = "button";
+        this.playerButton.classList.add("mapboxgl-ctrl-player-icon");
+        this.playerButton.style.backgroundImage =
+          "url(\"background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-users'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E\");\")";
+        this.container.appendChild(this.playerButton);
+        this.playerButton.addEventListener("click", () => {
+          if (hidePlayers) {
+            console.log(hidePlayers);
+            document.documentElement.style.setProperty("--marker-display", 1);
+            hidePlayers = false;
+          } else {
+            document.documentElement.style.setProperty("--marker-display", 0);
+            hidePlayers = true;
+          }
+        });
+        return this.container;
+      }
+
+      onRemove() {
+        this.container.parentNode.removeChild(this.container);
+        this.map = undefined;
+      }
+    }
+
+    const mapInstance = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/nachwahl/cl2nl1qes00bn14ksw5y85arm",
+      center: [lng, lat],
+      zoom: zoom,
+    });
+    if (renderOverlay) {
+      console.log("e")
+      mapInstance.addControl(new mapboxgl.NavigationControl(), "top-left");
+      mapInstance.addControl(
+        new MapboxStyleSwitcherControl(styles, { defaultStyle: "Dark" }), "top-left"
+      );
+      mapInstance.addControl(new HidePlayerControl(), "top-left");
+      var Draw = new MapboxDraw();
+
+      // Map#addControl takes an optional second argument to set the position of the control.
+      // If no position is specified the control defaults to `top-right`. See the docs
+      // for more details: https://docs.mapbox.com/mapbox-gl-js/api/#map#addcontrol
+
+      mapInstance.addControl(Draw, 'top-left');
+      
+      setDraw(Draw)
+    }
+    setMap(mapInstance);
+
+    mapInstance.on('style.load', () => {
+      let buildings = [];
+
+      axios.get("/api/interactiveBuildings/all").then(({data}) => {
+
+          data.forEach((building) => {
+              let b = generate3DLayer(building.id, JSON.parse(building.origin), building.altitude, JSON.parse(building.rotate), building.fileURL, mapInstance)
+              mapInstance.addLayer(b, 'waterway-label');
+          })
+
+
+      })
+    });
+
+    let buildings = [];
+
+    //axios.get("/api/v1/interactiveBuildings/all").then(({data}) => {
+
+    //    data.forEach((building) => {
+    //        let b = generate3DLayer(building.id, JSON.parse(building.origin), building.altitude, JSON.parse(building.rotate), building.fileURL, mapInstance)
+    //        mapInstance.addLayer(b, 'waterway-label');
+    //    })
+
+    //})
+
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+    });
+  });
+
+  useEffect(() => {
+    if (!map) return;
+    if (!updateMap) return;
+    updateRegions();
+  }, [updateMap]);
+
+  const updateRegions = async () => {
+    let regions = await axios.get("/api/exports/geojsonPoint");
+    map.getSource("regions").setData(regions.data);
+    setUpdateMap(false);
+  };
+
+  useEffect(() => {
+    if (map) {
+      map.on("load", () => {
+        addLayer().then(() => testQuery());
+      });
+    }
+  }, [map]);
+
+  useEffect(() => {
+    testQuery();
+  }, [query]);
+
+  const testQuery = async () => {
+    if (query.get("region")) {
+      let regionId = query.get("region");
+      const uuidRegexExp =
+        /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+      if (uuidRegexExp.test(regionId)) {
+        axios.get(`/api/region/${regionId}`).then((region) => {
+          let coords = JSON.parse(region.data.data);
+          coords.push(coords[0]);
+          let poly = polygon([coords]);
+          let centerMass = centerOfMass(poly);
+          changeLatLon(
+            centerMass.geometry.coordinates[0],
+            centerMass.geometry.coordinates[1]
+          );
+          if (query.get("details") === "true") {
+            openDialog({
+              id: regionId,
+              userUuid: region.data.userUUID,
+              username: region.data.username,
+            });
+          }
+        });
+      } else {
+        console.error(
+          "string in region query is not a valid uuid. maybe a directory climbing attack?"
+        );
+      }
+    }
+  };
+
+  const handleQueryChange = (query) => {
+    if (!query) {
+        setActions([])
+    }
+
+    const regexForCoords = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/
+    if (regexForCoords.test(query)) {
+        let coords = query.replace(" ", "").split(",");
+        setActions([
+            {
+                title: 'Go to coordinates',
+                description: query,
+                onTrigger: () => changeLatLon(coords[0], coords[1]),
+                icon: <BiMapPin size={18}/>,
+            },
+        ])
+        return;
+    }
+
+    setShowSearchLoading(true);
+    searchInOSM(query, changeLatLon).then(r => {
+        setActions(r);
+        setShowSearchLoading(false);
+    })
+
+}
+
+  
+
+  const addLayer = async () => {
+    let regions = await axios.get("/api/exports/geojsonPoint");
+    console.log(regions.data)
+    setShowLoadingOverlay(false);
+    map.addSource("regions", {
+      type: "geojson",
+      data: regions.data,
+      tolerance: 0,
+      generateId: true
+    });
+
+    console.log("ef")
+    map.addLayer({
+      id: "regions-layer",
+      type: "fill",
+      source: "regions",
+      paint: {
+        "fill-color": [
+          "match",
+          ["get", "regionType"],
+          "normal",
+          "rgba(3,80,203,0.37)",
+          "event",
+          "rgba(225,4,4,0.37)",
+          "plot",
+          "rgba(30,203,3,0.37)",
+          /* other */ "rgba(3,80,203,0.37)",
+        ],
+      }
+    });
+
+    map.addLayer({
+      id: "outline",
+      type: "line",
+      source: "regions",
+      layout: {},
+
+      paint: {
+        "line-color": [
+          "match",
+          ["get", "regionType"],
+          "normal",
+          "rgb(0,90,229)",
+          "event",
+          "rgb(149,5,5)",
+          "plot",
+          "rgb(25,118,2)",
+          /* other */ "rgb(0,90,229)",
+        ],
+        "line-width": 3,
+      },
+      
+    });
+
+    map.on("click", "regions-layer", (e) => {
+      openDialog(e.features[0].properties.id);
+    });
+
+    map.on("mouseenter", "regions-layer", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", "regions-layer", () => {
+      map.getCanvas().style.cursor = "";
+    });
+
+    map.on("idle", () => {
+      console.log("eeee")
+      map.resize()
+    })
+
+    map.on("contextmenu", (e) => {
+      if (gEdit) return
+      clipboard.copy(e.lngLat.lat + ", " + e.lngLat.lng);
+      toast.dark(`✅ Copied successfully`, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    })
+
+    $('#map-div').show();
+
+    map.resize()
+    console.log(map.getCanvas().toDataURL())
+    console.log(map.getCanvasContainer())
+  };
+
+  
+
+  const changeLatLon = (lat, lon) => {
+    map.flyTo({
+      center: [lon, lat],
+      zoom: 16,
+      essential: true,
+    });
+  };
+
+  function saveEdit() {
+    if (reRender[editID] !== null && draw.get(editID) !== undefined) {
+      
+      console.log(draw.get(editID));
+      console.log(draw.getSelected())
+      const remapReRender = draw.get(editID).geometry.coordinates[0].map((e) => [e[1], e[0]])
+      console.log(remapReRender)
+      const coordsStr =
+        `[${remapReRender.map((f) => `[${f[0]}, ${f[1]}]`).join(", ")}]`;
+      console.log(coordsStr);
+      axios
+        .post(`/api/region/changeData/${editID}`, { data: coordsStr })
+        .then(() => {
+          updateRegions()
+          toast.dark(`✅ Edited region id ${editID}`, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
+        })
+        .catch((err) => {
+          alert("An error occurred! " + err.message);
+        });
+    }
+    setEdit({});
+    setGEdit(false);
+    draw.deleteAll()
+
+    const newreRender = reRender;
+    delete newreRender[editID];
+    setReRender(newreRender);
+    setEditID(null);
+    
+  }
+
+  function cancelEdit() {
+    setEdit({});
+    setGEdit(false);
+    const tempReRender = reRender;
+    delete tempReRender[editID];
+    setReRender(editID);
+    setEditID(null);
+    draw.deleteAll()
+  }
+
+
 
   const openDialog = (uid) => {
     setDialogData(uid);
@@ -142,33 +475,24 @@ const Map = (props) => {
   };
 
   const updateData = () => {
-    axios
+   axios
       .get("/api/data/")
       .then((result) => {
-        setRegions(result.data);
-      })
-      .catch((err) => {
-        alert("An error occurred! " + err.message);
-      });
+        setRegionsUnused(result.data);
+     })
+    .catch((err) => {
+     alert("An error occurred! " + err.message);
+  });
   };
   if (document.getElementsByClassName("leaflet-control-layers")[0])
     document.getElementsByClassName(
       "leaflet-control-layers"
     )[0].style.visibility = renderOverlay ? "visible" : "hidden";
-  if (!regions)
-    return (
-      <div className="bg-gray-900 h-screen w-100 flex items-center justify-center">
-        <TailSpin width="100" />
-      </div>
-    );
   return (
+    <SpotlightProvider shortcut={['mod + S']} actions={actions} onQueryChange={handleQueryChange}
+    searchIcon={showSearchLoading ? <Loader size={"xs"}/> : <AiOutlineSearch/>}
+    filter={(query, actions) => actions}>
     <div>
-      {/* {!renderOverlay && <style jsx global>{`.leaflet-control-layers { display: none; }`}  </style>} */}
-      {!renderOverlay && <style jsx global>{`.leaflet-control-layers { display: none; }`}  </style>}
-      {/*{<style jsx global>{`.leaflet-draw-toolbar { visibility: hidden; }`}  </style>} */}
-      {<style jsx global>{`.leaflet-draw-toolbar { visibility: hidden;; }`}  </style>}
-      {/*{<style jsx global>{`.leaflet-draw-actions { visibility: hidden; }`}  </style>} */}
-      {<style jsx global>{`.leaflet-draw-actions  { visibility: hidden; }`}  </style>}
       <AnimatePresence>
         {dialogOpen && (
           <div>
@@ -221,27 +545,39 @@ const Map = (props) => {
       </AnimatePresence>
 
       {gEdit && (
-      <div
-            className="absolute top-0 text-white p-4 flex justify-center items-center"
-            style={{ zIndex: "1000", right: '40%'}}
-          >
-        <a href="#" onClick={cancelEdit}>
-            <button type="button" class="inline-block px-6 py-2.5 bg-red-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-red-800 active:shadow-lg transition duration-150 ease-in-out">Cancel Edit</button>
-        </a>
+        <div
+          className="absolute top-0 text-white p-4 flex justify-center items-center"
+          style={{ zIndex: "1000", right: "40%" }}
+        >
+          <a href="#" onClick={cancelEdit}>
+            <button
+              type="button"
+              class="inline-block px-6 py-2.5 bg-red-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-red-800 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              Cancel Edit
+            </button>
+          </a>
 
-        <div style={{
-            width: '10px',
-            height: 'auto',
-            display: 'inline-block'
-        }}/>
-        
-        <a href="#" onClick={saveEdit}>
-            <button type="button" class="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">&nbsp;&nbsp;&nbsp;Save Edit&nbsp;&nbsp;</button>
-        </a>
-      </div>
+          <div
+            style={{
+              width: "10px",
+              height: "auto",
+              display: "inline-block",
+            }}
+          />
+
+          <a href="#" onClick={saveEdit}>
+            <button
+              type="button"
+              class="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              &nbsp;&nbsp;&nbsp;Save Edit&nbsp;&nbsp;
+            </button>
+          </a>
+        </div>
       )}
-      
-      <a href="#" onClick={updateData}>
+
+      <a href="#" onClick={() => {}}>
         {renderOverlay && (
           <div
             className="absolute top-0 right-0 text-white p-4 flex justify-center items-center"
@@ -292,60 +628,11 @@ const Map = (props) => {
           </div>
         )}
       </a>
-      <MapContainer
-        center={
-          props.zoomPosition
-            ? props.zoomPosition
-            : countries?.includes("isr")
-            ? [31.7541495, 35.2258429]
-            : [26.0494961, 72.0811977]
-        }
-        zoom={props.zoomPosition ? 17 : countries?.includes("isr") ? 8 : 4}
-        scrollWheelZoom={true}
-        zoomControl={renderOverlay ? true : false}
-        style={{ height: "100vh", width: "100vw" }}
-        ref={mapRef}
-        preferCanvas={true}
-        maxZoom={23}
-      >
-        <LayersControl position="bottomright">
-          <LayersControl.BaseLayer checked name="Dark">
-            <TileLayer
-              attribution={`&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a> | <a href="https://github.com/Nachwahl/polymap">PolyMap</a> | Total regions: ${regions.length}`}
-              url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
-              maxZoom={23}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="OpenStreetMap Default">
-            <TileLayer
-              attribution={`&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors | <a href="https://github.com/Nachwahl/polymap">PolyMap</a> | Total regions: ${regions.length}`}
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maxZoom={23}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Satellite">
-            <TileLayer
-              attribution={`&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://mapbox.com">Mapbox</a> | <a href="https://github.com/Nachwahl/polymap">PolyMap</a> | Total regions: ${regions.length}`}
-              url="https://api.mapbox.com/styles/v1/nachwahl/ckmkvfkwg00ds17rwt7u4zlyi/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmFjaHdhaGwiLCJhIjoiY2tta3ZkdXJ2MDAwbzJ1cXN3ejM5N3NkcyJ9.t2yFHFQzb2PAHvPHF16sFw"
-              maxZoom={23}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Navigation">
-            <TileLayer
-              attribution={`&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://mapbox.com">Mapbox</a> | <a href="https://github.com/Nachwahl/polymap">PolyMap</a> | Total regions: ${regions.length}`}
-              url="https://api.mapbox.com/styles/v1/nachwahl/ckmkvtwzd3l0617s6rmry2gm5/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmFjaHdhaGwiLCJhIjoiY2tta3ZkdXJ2MDAwbzJ1cXN3ejM5N3NkcyJ9.t2yFHFQzb2PAHvPHF16sFw"
-              maxZoom={23}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Base">
-            <TileLayer
-              attribution={`&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://mapbox.com">Mapbox</a> | <a href="https://github.com/Nachwahl/polymap">PolyMap</a> | Total regions: ${regions.length}`}
-              url="https://api.mapbox.com/styles/v1/nachwahl/ckmkvx4vbeplx17qyfztyb6pk/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmFjaHdhaGwiLCJhIjoiY2tta3ZkdXJ2MDAwbzJ1cXN3ejM5N3NkcyJ9.t2yFHFQzb2PAHvPHF16sFw"
-              maxZoom={23}
-            />
-          </LayersControl.BaseLayer>
-        </LayersControl>
-
+      <div style={{ width: "100%", position: "relative", flex: 1 }}>
+        <LoadingOverlay visible={showLoadingOverlay} />
+        <div ref={mapContainer} style={{ width: "100%", height: "100%" }}/>
+      </div>
+      {/* 
         {regions?.map((region) => {
           let pane = (
             <FeatureGroup>
@@ -432,7 +719,7 @@ const Map = (props) => {
                         region.useruuid !== "EVENT"
                           ? `https://minotar.net/helm/${region.username
                               .replaceAll(/n\/a/gi, "IHG_Steve")
-                              .replaceAll(/([*/])/g, "")}`
+                              .replaceAll(/([*])/g, "")}` 
                           : "/logo.png"
                       }
                       className="w-1/2 h-1/2"
@@ -484,8 +771,9 @@ const Map = (props) => {
             return pane;
           }
         })}
-      </MapContainer>
+        */}
     </div>
+    </SpotlightProvider>
   );
 };
 

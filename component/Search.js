@@ -3,55 +3,18 @@ import {Configure, connectAutoComplete, InstantSearch} from "react-instantsearch
 import Autosuggest from "react-autosuggest";
 import {useRouter} from "next/router";
 import algoliasearch from "algoliasearch/lite";
+import {AiOutlineUser, AiOutlineSearch} from "react-icons/ai";
+import {openSpotlight} from "@mantine/spotlight";
+import {ActionIcon, Box, Burger, Container, createStyles, Group, Header, Paper, Transition} from "@mantine/core";
 
-
-const Search = props => {
+const Search = ({mapRef}) => {
     const router = useRouter()
-    const searchClient = algoliasearch(
-        process.env.NEXT_PUBLIC_ALGOLIA_APPID,
-        process.env.NEXT_PUBLIC_ALGOLIA_APIKEY_SEARCH
-    );
-    const AutoComplete = connectAutoComplete(
-        ({ hits, currentRefinement, refine }) => (
-            <Autosuggest
-                suggestions={hits}
-                onSuggestionsFetchRequested={({ value }) => refine(value)}
-                onSuggestionsClearRequested={() => refine('')}
-                getSuggestionValue={hit => hit.uid}
-                renderSuggestion={hit => (
-                    <div className="bg-white hover:bg-blue-500 p-2 text-sm rounded hover:text-white mt-1 cursor-pointer" onClick={() => router.push('/region/' + hit.uid)}>
-                        <div className="flex">
-                            <img src={hit.useruuid !== "EVENT" ? `https://crafatar.com/avatars/${hit.useruuid}`:"/logo.png"} className="w-1/4 h-1/4" alt=""/>
-
-
-                            <div className="ml-2">
-                                <b>{hit.username}</b>
-                                <p>{hit.city}</p>
-                                <p className="text-gray-300 italic text-xs">{hit.uid}</p>
-                            </div>
-                        </div>
-                    </div>
-                    )
-                }
-                inputProps={{
-                    placeholder: 'Search',
-                    className: "focus:ring-blue-500 focus:border-blue-500 block w-full pl-4 pr-12 sm:text-sm border-gray-300 rounded-md shadow-lg",
-                    value: currentRefinement,
-                    onChange: () => {},
-                }}
-            />
-        )
-    );
     if (router?.query?.overlay !== "false") return (
-        <div>
-            <InstantSearch searchClient={searchClient} indexName="regions">
-                <Configure hitsPerPage={5} />
-                <AutoComplete />
-            </InstantSearch>
-            <a href="https://www.algolia.com/"><img width="50%" className="mt-1" src="/search-by-algolia.svg" alt=""/></a>
-
-
-        </div>
+        <>{
+            mapRef && <ActionIcon ml={"sm"}
+                                  onClick={() => openSpotlight()}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" height="36px" viewBox="0 0 24 24" width="36px" fill="#FFFFFF"><path d="M0 0h24v24H0z" fill="none"/><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></ActionIcon>
+        }</>
     );
     else return null;
 }
