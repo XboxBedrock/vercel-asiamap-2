@@ -125,7 +125,7 @@ const stats = props => {
                             countryboard.map((user) => {
                                 return (
                                     <div className="table-row">
-                                        <div className="table-cell font-bold">{countries.getName(user[0], "en")}</div>
+                                        <div className="table-cell font-bold">{countries.getName(user[0], "en").replace(", Province of China", "")}</div>
                                         <div className="table-cell text-right">{user[1]} buildings</div>
                                     </div>
                                 )
